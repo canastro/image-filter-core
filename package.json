@@ -1,6 +1,6 @@
 {
   "name": "image-filter-core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Core module for image-filter",
   "main": "src/index.js",
   "scripts": {
@@ -29,8 +29,6 @@
     "pixel"
   ],
   "devDependencies": {
-    "babel-plugin-transform-object-assign": "^6.5.0",
-    "babel-plugin-transform-object-rest-spread": "^6.6.5",
     "babel-polyfill": "^6.9.0",
     "babel-preset-es2015": "^6.5.0",
     "babelify": "^7.2.0",
@@ -51,7 +49,9 @@
     "watchify": "^3.7.0"
   },
   "dependencies": {
-    "webworkify": "^1.2.1"
+    "webworkify": "^1.2.1",
+    "babel-plugin-transform-object-assign": "^6.5.0",
+    "babel-plugin-transform-object-rest-spread": "^6.6.5"
   },
   "browserify": {
     "transform": [
