@@ -47,7 +47,7 @@ export function apply(worker, nWorkers, canvas, context, params, blockSize, segm
                 finished++;
 
                 if (finished === nWorkers) {
-                    resolve(canvas.toDataURL());
+                    resolve(context.getImageData(0, 0, canvas.width, canvas.height));
                 }
             });
 
