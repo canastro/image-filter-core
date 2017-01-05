@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "./node_modules/.bin/karma start",
-    "codecov": "cat coverage/*/lcov.info | ./node_modules/codecov.io/bin/codecov.io.js",
+    "codecov": "cat coverage/*/lcov.info | codecov",
     "serve": "http-server sandbox"
   },
   "author": "Ricardo Canastro",
@@ -28,9 +28,6 @@
     "pixel"
   ],
   "devDependencies": {
-    "babel-polyfill": "^6.9.0",
-    "babel-preset-es2015": "^6.5.0",
-    "babelify": "^7.2.0",
     "browserify": "^13.0.0",
     "browserify-istanbul": "^1.0.0",
     "chai": "^3.5.0",
@@ -44,6 +41,9 @@
     "karma-phantomjs-launcher": "^1.0.0",
     "mocha": "^2.4.5",
     "phantomjs-prebuilt": "^2.1.5",
+    "proxyquire": "^1.7.10",
+    "proxyquire-universal": "^1.0.8",
+    "proxyquireify": "^3.2.1",
     "sinon": "^1.17.3",
     "watchify": "^3.7.0"
   },
