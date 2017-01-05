@@ -2,10 +2,11 @@ require('es6-promise/auto');
 var work = require('webworkify');
 
 /**
+ * It returns a canvas with the given width and height
  * @name getCanvas
- * @param {number} w - width
- * @param {number} h - height
- * @returns {object}
+ * @param {Number} w - width
+ * @param {Number} h - height
+ * @returns {Object}
  */
 exports.getCanvas = function (w, h) {
     var canvas = document.createElement('canvas');
@@ -15,17 +16,36 @@ exports.getCanvas = function (w, h) {
     return canvas;
 };
 
+/**
+ * Given a ImageData it returns the dataURL
+ * @name convertImageDataToCanvasURL
+ * @param {ImageData} imageData
+ * @returns {String}
+ */
+exports.convertImageDataToCanvasURL = function (imageData) {
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    ctx.putImageData(imageData, 0, 0);
+
+    return canvas.toDataURL();
+};
+
 
 /**
+ * Given a worker file with the transformation the work is splitted
+ * between the configured number of workers and the transformation is applied
+ * returning a Promise
  * @name apply
- * @param {object} worker
- * @param {number} nWorkers
- * @param {object} canvas
- * @param {object} context
- * @param {number} params
- * @param {number} blockSize
- * @param {number} segmentLength
- * @returns {promise}
+ * @param {Object} worker
+ * @param {Number} nWorkers
+ * @param {Object} canvas
+ * @param {Object} context
+ * @param {Number} params
+ * @param {Number} blockSize
+ * @param {Number} segmentLength
+ * @returns {Promise}
  */
 exports.apply = function (worker, nWorkers, canvas, context, params, blockSize, segmentLength) {
     var w;

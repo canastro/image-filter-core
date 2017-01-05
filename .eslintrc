@@ -17,6 +17,7 @@
     "globals": {
         "describe": true,
         "context": true,
-        "it": true
+        "it": true,
+        "document": true
     }
 }
