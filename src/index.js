@@ -1,43 +1,64 @@
-import work from 'webworkify';
+require('es6-promise/auto');
+var work = require('webworkify');
 
 /**
+ * It returns a canvas with the given width and height
  * @name getCanvas
- * @param {number} w - width
- * @param {number} h - height
- * @returns {object}
+ * @param {Number} w - width
+ * @param {Number} h - height
+ * @returns {Object}
  */
-export function getCanvas(w, h) {
+exports.getCanvas = function (w, h) {
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
 
     return canvas;
-}
+};
+
+/**
+ * Given a ImageData it returns the dataURL
+ * @name convertImageDataToCanvasURL
+ * @param {ImageData} imageData
+ * @returns {String}
+ */
+exports.convertImageDataToCanvasURL = function (imageData) {
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    ctx.putImageData(imageData, 0, 0);
+
+    return canvas.toDataURL();
+};
 
 
 /**
+ * Given a worker file with the transformation the work is splitted
+ * between the configured number of workers and the transformation is applied
+ * returning a Promise
  * @name apply
- * @param {object} worker
- * @param {number} nWorkers
- * @param {object} canvas
- * @param {object} context
- * @param {number} params
- * @param {number} blockSize
- * @param {number} segmentLength
- * @returns {promise}
+ * @param {Object} worker
+ * @param {Number} nWorkers
+ * @param {Object} canvas
+ * @param {Object} context
+ * @param {Number} params
+ * @param {Number} blockSize
+ * @param {Number} segmentLength
+ * @returns {Promise}
  */
-export function apply(worker, nWorkers, canvas, context, params, blockSize, segmentLength) {
-    let w;
-    let finished = 0;
+exports.apply = function (worker, nWorkers, canvas, context, params, blockSize, segmentLength) {
+    var w;
+    var finished = 0;
 
-    return new Promise((resolve) => {
-        for (let index = 0; index < nWorkers; index++) {
+    return new Promise(function (resolve) {
+        for (var index = 0; index < nWorkers; index++) {
             w = work(worker);
 
-            w.addEventListener('message', (e) => {
+            w.addEventListener('message', function (e) {
                 // Data is retrieved using a memory clone operation
-                const resultCanvasData = e.data.result;
-                const index = e.data.index;
+                var resultCanvasData = e.data.result;
+                var index = e.data.index;
 
                 // Copying back canvas data to canvas
                 // If the first webworker  (index 0) returns data, apply it at pixel (0, 0) onwards
@@ -52,15 +73,15 @@ export function apply(worker, nWorkers, canvas, context, params, blockSize, segm
             });
 
             // Getting the picture
-            const canvasData = context.getImageData(0, blockSize * index, canvas.width, blockSize);
+            var canvasData = context.getImageData(0, blockSize * index, canvas.width, blockSize);
 
             // Sending canvas data to the worker using a copy memory operation
             w.postMessage({
                 data: canvasData,
-                index,
+                index: index,
                 length: segmentLength,
-                params
+                params: params
             });
         }
     });
-}
+};
