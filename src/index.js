@@ -34,7 +34,7 @@ exports.convertImageDataToCanvasURL = function (imageData) {
 
 
 /**
- * Given a worker file with the transformation the work is splitted
+ * Given a worker file with the transformation the work is split
  * between the configured number of workers and the transformation is applied
  * returning a Promise
  * @name apply
@@ -43,13 +43,22 @@ exports.convertImageDataToCanvasURL = function (imageData) {
  * @param {Object} canvas
  * @param {Object} context
  * @param {Number} params
- * @param {Number} blockSize
- * @param {Number} segmentLength
  * @returns {Promise}
  */
-exports.apply = function (worker, nWorkers, canvas, context, params, blockSize, segmentLength) {
+exports.apply = function (worker, nWorkers, canvas, context, params) {
     var w;
     var finished = 0;
+    var len = canvas.width * canvas.height * 4;
+    var segmentLength;
+    var blockSize;
+
+    // Minimum number of workers = 1
+    if (!nWorkers) {
+        nWorkers = 1;
+    }
+
+    segmentLength = len / nWorkers; // This is the length of array sent to the worker
+    blockSize = canvas.height / nWorkers; // Height of the picture chunck for every worker
 
     return new Promise(function (resolve) {
         for (var index = 0; index < nWorkers; index++) {

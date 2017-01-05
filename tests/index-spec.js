@@ -56,60 +56,108 @@ describe('utils', function () {
     });
 
     describe('#apply()', function () {
-        it('should', function (done) {
-            var eventListenerCallback;
-            const expectedResult = 'TEST';
+        context('when nWorkers is bigger then zero', function () {
+            it('should call postMessage and putImageData nWorker times', function (done) {
+                var eventListenerCallback;
+                const expectedResult = 'TEST';
 
-            const ctx = {
-                putImageData: sandbox.stub(),
-                getImageData: sandbox.stub()
-            };
+                const ctx = {
+                    putImageData: sandbox.stub(),
+                    getImageData: sandbox.stub()
+                };
 
-            const canvas = {
-                getContext: sandbox.stub().returns(ctx),
-                toDataURL: sandbox.stub().returns(expectedResult)
-            };
+                const canvas = {
+                    getContext: sandbox.stub().returns(ctx),
+                    toDataURL: sandbox.stub().returns(expectedResult)
+                };
 
-            const worker = {
-                addEventListener: function addEventListener(evt, fn) {
-                    eventListenerCallback = fn;
-                },
-                postMessage: sandbox.stub()
-            };
+                const worker = {
+                    addEventListener: function addEventListener(evt, fn) {
+                        eventListenerCallback = fn;
+                    },
+                    postMessage: sandbox.stub()
+                };
 
-            const utils = proxyquire('../src/index', {
-                'webworkify': function () { return worker; }
+                const utils = proxyquire('../src/index', {
+                    'webworkify': function () { return worker; }
+                });
+
+                const nWorkers = 4;
+
+                const result = utils.apply(
+                    'DUMMY',
+                    nWorkers,
+                    canvas,
+                    ctx,
+                    {}
+                );
+
+                const evt = { data: { result: 'DUMMY', index: 1 } };
+                eventListenerCallback(evt);
+                eventListenerCallback(evt);
+                eventListenerCallback(evt);
+                eventListenerCallback(evt);
+
+                result.then(function () {
+                    // One for each worker and one for the final result
+                    expect(ctx.getImageData.callCount).to.equal(nWorkers + 1);
+
+                    // One for each worker
+                    expect(ctx.putImageData.callCount).to.equal(nWorkers);
+                    expect(worker.postMessage.callCount).to.equal(nWorkers);
+                    done();
+                });
             });
+        });
 
-            const nWorkers = 4;
-            const len = canvas.width * canvas.height * 4;
-            const segmentLength = len / nWorkers; // This is the length of array sent to the worker
-            const blockSize = canvas.height / nWorkers; // Height of the picture chunck for every worker
+        context('when nWorkers is zero', function () {
+            it('should call postMessage and putImageData one time', function (done) {
+                var eventListenerCallback;
+                const expectedResult = 'TEST';
 
-            const result = utils.apply(
-                'DUMMY',
-                nWorkers,
-                canvas,
-                ctx,
-                {},
-                blockSize,
-                segmentLength
-            );
+                const ctx = {
+                    putImageData: sandbox.stub(),
+                    getImageData: sandbox.stub()
+                };
 
-            const evt = { data: { result: 'DUMMY', index: 1 } };
-            eventListenerCallback(evt);
-            eventListenerCallback(evt);
-            eventListenerCallback(evt);
-            eventListenerCallback(evt);
+                const canvas = {
+                    getContext: sandbox.stub().returns(ctx),
+                    toDataURL: sandbox.stub().returns(expectedResult)
+                };
 
-            result.then(function () {
-                // One for each worker and one for the final result
-                expect(ctx.getImageData.callCount).to.equal(5);
+                const worker = {
+                    addEventListener: function addEventListener(evt, fn) {
+                        eventListenerCallback = fn;
+                    },
+                    postMessage: sandbox.stub()
+                };
 
-                // One for each worker
-                expect(ctx.putImageData.callCount).to.equal(4);
-                expect(worker.postMessage.callCount).to.equal(4);
-                done();
+                const utils = proxyquire('../src/index', {
+                    'webworkify': function () { return worker; }
+                });
+
+                const nWorkers = 0;
+
+                const result = utils.apply(
+                    'DUMMY',
+                    nWorkers,
+                    canvas,
+                    ctx,
+                    {}
+                );
+
+                const evt = { data: { result: 'DUMMY', index: 1 } };
+                eventListenerCallback(evt);
+
+                result.then(function () {
+                    // One for each worker and one for the final result
+                    expect(ctx.getImageData.callCount).to.equal(2);
+
+                    // One for each worker
+                    expect(ctx.putImageData.callCount).to.equal(1);
+                    expect(worker.postMessage.callCount).to.equal(1);
+                    done();
+                });
             });
         });
     });
