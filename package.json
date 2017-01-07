@@ -1,10 +1,11 @@
 {
   "name": "image-filter-core",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Core module for image-filter",
   "main": "src/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/karma start",
+    "eslint": "eslint src/**/*.js",
+    "test": "karma start",
     "codecov": "cat coverage/*/lcov.info | codecov",
     "serve": "http-server sandbox"
   },
@@ -32,6 +33,7 @@
     "browserify-istanbul": "^1.0.0",
     "chai": "^3.5.0",
     "codecov.io": "^0.1.6",
+    "eslint": "^3.13.0",
     "http-server": "^0.9.0",
     "karma": "^0.13.22",
     "karma-browserify": "^5.0.2",
@@ -48,7 +50,6 @@
     "watchify": "^3.7.0"
   },
   "dependencies": {
-    "es6-promise": "^4.0.5",
-    "webworkify": "^1.2.1"
+    "es6-promise": "^4.0.5"
   }
 }

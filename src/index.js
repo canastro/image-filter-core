@@ -1,28 +1,28 @@
 require('es6-promise/auto');
-var work = require('webworkify');
+var worker = require('./worker');
 
 /**
- * It returns a canvas with the given width and height
- * @name getCanvas
- * @param {Number} w - width
- * @param {Number} h - height
- * @returns {Object}
- */
-exports.getCanvas = function (w, h) {
+* It returns a canvas with the given width and height
+* @name getCanvas
+* @param {Number} w - width
+* @param {Number} h - height
+* @returns {Object}
+*/
+function getCanvas(w, h) {
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
 
     return canvas;
-};
+}
 
 /**
- * Given a ImageData it returns the dataURL
- * @name convertImageDataToCanvasURL
- * @param {ImageData} imageData
- * @returns {String}
- */
-exports.convertImageDataToCanvasURL = function (imageData) {
+* Given a ImageData it returns the dataURL
+* @name convertImageDataToCanvasURL
+* @param {ImageData} imageData
+* @returns {String}
+*/
+function convertImageDataToCanvasURL(imageData) {
     var canvas = document.createElement('canvas');
     var ctx = canvas.getContext('2d');
     canvas.width = imageData.width;
@@ -30,27 +30,68 @@ exports.convertImageDataToCanvasURL = function (imageData) {
     ctx.putImageData(imageData, 0, 0);
 
     return canvas.toDataURL();
-};
-
+}
 
 /**
- * Given a worker file with the transformation the work is split
- * between the configured number of workers and the transformation is applied
- * returning a Promise
- * @name apply
- * @param {Object} worker
- * @param {Number} nWorkers
- * @param {Object} canvas
- * @param {Object} context
- * @param {Number} params
- * @returns {Promise}
+* Transforms the body of a function into a string
+* This is used to require the worker function and create a new Blob
+* @method  extractBodyFunction
+* @param   {Function} fn
+* @returns {String}
+*/
+function extractBodyFunction(fn) {
+    return fn.toString().trim().match(
+        /^function\s*\w*\s*\([\w\s,]*\)\s*{([\w\W]*?)}$/
+    )[1];
+}
+
+/**
+ * Creates a Worker from the contents in ./worker.js
+ * @method  createWorker
+ * @returns {Worker}
  */
-exports.apply = function (worker, nWorkers, canvas, context, params) {
-    var w;
+function createWorker() {
+    var functionBody = extractBodyFunction(worker);
+    var blob = new Blob([functionBody], { type: 'text/javascript' });
+
+    return new Worker(window.URL.createObjectURL(blob));
+}
+
+/**
+ * Creats transformation ObjectURL so that this function
+ * can be imported in the worker
+ * @method  createTransformation
+ * @param   {Function} transform
+ * @returns {String}
+ */
+function createTransformation(transform) {
+    var blob = new Blob(['' + transform], { type: 'text/javascript' });
+
+    return window.URL.createObjectURL(blob);
+}
+
+/**
+* Given a worker file with the transformation the work is split
+* between the configured number of workers and the transformation is applied
+* returning a Promise
+* @name apply
+* @param {Function} worker
+* @param {Number} options
+* @returns {Promise}
+*/
+function apply(data, transform, options, nWorkers) {
+    var w = createWorker();
+    var transformationURL = createTransformation(transform);
+
+    var canvas = getCanvas(data.width, data.height);
+    var context = canvas.getContext('2d');
     var finished = 0;
     var len = canvas.width * canvas.height * 4;
     var segmentLength;
     var blockSize;
+
+    // Drawing the source image into the target canvas
+    context.putImageData(data, 0, 0);
 
     // Minimum number of workers = 1
     if (!nWorkers) {
@@ -62,7 +103,6 @@ exports.apply = function (worker, nWorkers, canvas, context, params) {
 
     return new Promise(function (resolve) {
         for (var index = 0; index < nWorkers; index++) {
-            w = work(worker);
 
             w.addEventListener('message', function (e) {
                 // Data is retrieved using a memory clone operation
@@ -86,11 +126,18 @@ exports.apply = function (worker, nWorkers, canvas, context, params) {
 
             // Sending canvas data to the worker using a copy memory operation
             w.postMessage({
-                data: canvasData,
+                canvasData: canvasData,
                 index: index,
                 length: segmentLength,
-                params: params
+                options: options,
+                transformationURL: transformationURL
             });
         }
     });
+}
+
+module.exports = {
+    apply: apply,
+    convertImageDataToCanvasURL: convertImageDataToCanvasURL,
+    getCanvas: getCanvas
 };
