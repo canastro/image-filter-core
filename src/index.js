@@ -50,11 +50,11 @@ function extractBodyFunction(fn) {
  * @method  createWorker
  * @returns {Worker}
  */
-function createWorker() {
+function createWorkerURL() {
     var functionBody = extractBodyFunction(worker);
     var blob = new Blob([functionBody], { type: 'text/javascript' });
 
-    return new Worker(window.URL.createObjectURL(blob));
+    return window.URL.createObjectURL(blob);
 }
 
 /**
@@ -80,9 +80,8 @@ function createTransformation(transform) {
 * @returns {Promise}
 */
 function apply(data, transform, options, nWorkers) {
-    var w = createWorker();
     var transformationURL = createTransformation(transform);
-
+    var workerURL = createWorkerURL();
     var canvas = getCanvas(data.width, data.height);
     var context = canvas.getContext('2d');
     var finished = 0;
@@ -103,16 +102,16 @@ function apply(data, transform, options, nWorkers) {
 
     return new Promise(function (resolve) {
         for (var index = 0; index < nWorkers; index++) {
+            var w = new Worker(workerURL);
 
             w.addEventListener('message', function (e) {
                 // Data is retrieved using a memory clone operation
                 var resultCanvasData = e.data.result;
-                var index = e.data.index;
 
                 // Copying back canvas data to canvas
                 // If the first webworker  (index 0) returns data, apply it at pixel (0, 0) onwards
                 // If the second webworker  (index 1) returns data, apply it at pixel (0, canvas.height/4) onwards, and so on
-                context.putImageData(resultCanvasData, 0, blockSize * index);
+                context.putImageData(resultCanvasData, 0, blockSize * e.data.index);
 
                 finished++;
 

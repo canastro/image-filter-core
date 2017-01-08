@@ -87,8 +87,8 @@ describe('index', function () {
                 const result = imageFilterCore.apply(data, transform, options, nWorkers);
 
                 // Two object urls created, one for the worker one for the transform function
-                expect(window.URL.createObjectURL.calledTwice).to.equal(true);
-                expect(window.Worker.calledOnce).to.equal(true);
+                expect(window.URL.createObjectURL.callCount).to.equal(2);
+                expect(window.Worker.callCount).to.equal(4);
 
                 const evt = { data: { result: 'DUMMY', index: 1 } };
                 eventListenerCallback(evt);
