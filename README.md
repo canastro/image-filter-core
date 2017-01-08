@@ -1,4 +1,5 @@
 ![build status](https://travis-ci.org/canastro/image-filter-threshold.svg?branch=master)
+[![Dependency Status](https://dependencyci.com/github/canastro/image-filter-core/badge)](https://dependencyci.com/github/canastro/image-filter-core)
 [![npm version](https://badge.fury.io/js/image-filter-threshold.svg)](https://badge.fury.io/js/image-filter-threshold)
 [![codecov](https://codecov.io/gh/canastro/image-filter-core/branch/master/graph/badge.svg)](https://codecov.io/gh/canastro/image-filter-core)
 

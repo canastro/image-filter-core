@@ -1,11 +1,12 @@
 {
   "name": "image-filter-core",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Core module for image-filter",
   "main": "src/index.js",
   "scripts": {
     "eslint": "eslint src/**/*.js",
     "test": "karma start",
+    "build": "npm run eslint && browserify sandbox/sandbox.js > sandbox/bundle.js",
     "codecov": "cat coverage/*/lcov.info | codecov",
     "serve": "http-server sandbox"
   },
@@ -43,11 +44,7 @@
     "karma-phantomjs-launcher": "^1.0.0",
     "mocha": "^2.4.5",
     "phantomjs-prebuilt": "^2.1.5",
-    "proxyquire": "^1.7.10",
-    "proxyquire-universal": "^1.0.8",
-    "proxyquireify": "^3.2.1",
-    "sinon": "^1.17.3",
-    "watchify": "^3.7.0"
+    "sinon": "^1.17.3"
   },
   "dependencies": {
     "es6-promise": "^4.0.5"

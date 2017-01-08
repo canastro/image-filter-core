@@ -85,8 +85,6 @@ function apply(data, transform, options, nWorkers) {
     var canvas = getCanvas(data.width, data.height);
     var context = canvas.getContext('2d');
     var finished = 0;
-    var len = canvas.width * canvas.height * 4;
-    var segmentLength;
     var blockSize;
 
     // Drawing the source image into the target canvas
@@ -97,12 +95,16 @@ function apply(data, transform, options, nWorkers) {
         nWorkers = 1;
     }
 
-    segmentLength = len / nWorkers; // This is the length of array sent to the worker
-    blockSize = canvas.height / nWorkers; // Height of the picture chunck for every worker
+    // Height of the picture chunck for every worker
+    blockSize = Math.floor(canvas.height / nWorkers);
 
     return new Promise(function (resolve) {
+        var w;
+        var height;
+        var canvasData;
+
         for (var index = 0; index < nWorkers; index++) {
-            var w = new Worker(workerURL);
+            w = new Worker(workerURL);
 
             w.addEventListener('message', function (e) {
                 // Data is retrieved using a memory clone operation
@@ -120,14 +122,20 @@ function apply(data, transform, options, nWorkers) {
                 }
             });
 
+            // In the last worker we have to make sure we process whatever is missing
+            height = blockSize;
+            if ((index + 1) === nWorkers) {
+                height = canvas.height - (blockSize * index);
+            }
+
             // Getting the picture
-            var canvasData = context.getImageData(0, blockSize * index, canvas.width, blockSize);
+            canvasData = context.getImageData(0, blockSize * index, canvas.width, height);
 
             // Sending canvas data to the worker using a copy memory operation
             w.postMessage({
                 canvasData: canvasData,
                 index: index,
-                length: segmentLength,
+                length: height * canvas.width * 4,
                 options: options,
                 transformationURL: transformationURL
             });
