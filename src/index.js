@@ -9,10 +9,14 @@ var worker = require('./worker');
 * @returns {Object}
 */
 function getCanvas(w, h) {
-    var canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-
+    if (typeof document === "undefined") {
+      var Canvas = require("canvas");
+      var canvas = new Canvas(w, h);
+    } else {
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+    }
     return canvas;
 }
 
