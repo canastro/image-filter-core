@@ -1,19 +1,14 @@
-module.exports = function (self) {
-    self.addEventListener('message', function (e) {
-        importScripts(e.data.transformationURL);
+process.on('message', function(data) {
+    var canvasData = data.canvasData;
 
-        var canvasData = e.data.canvasData;
+    var length = data.length;
+    var index = data.index;
 
-        var length = e.data.length;
-        var index = e.data.index;
+    var transform = new Function('return ' + data.transform)();
+    transform(canvasData.data, length, data.options);
 
-        transform(canvasData.data, length, e.data.options);
-
-        self.postMessage({
-            result: canvasData,
-            index: index
-        });
-
-        self.close();
+    process.send({
+        result: canvasData,
+        index: index
     });
-};
+});

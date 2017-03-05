@@ -1,6 +1,6 @@
 require('es6-promise/auto');
 var Canvas = require('canvas');
-var worker = require('./worker');
+var cp = require('child_process');
 
 /**
 * It returns a canvas with the given width and height
@@ -22,47 +22,9 @@ function getCanvas(w, h) {
 function convertImageDataToCanvasURL(imageData) {
     var canvas = new Canvas(imageData.width, imageData.height);
     var ctx = canvas.getContext('2d');
-    ctx.putImageData(imageData, 0, 0);
+    ctx.drawImage(imageData, 0, 0);
 
     return canvas.toDataURL();
-}
-
-/**
-* Transforms the body of a function into a string
-* This is used to require the worker function and create a new Blob
-* @method  extractBodyFunction
-* @param   {Function} fn
-* @returns {String}
-*/
-function extractBodyFunction(fn) {
-    return fn.toString().trim().match(
-        /^function\s*\w*\s*\([\w\s,]*\)\s*{([\w\W]*?)}$/
-    )[1];
-}
-
-/**
- * Creates a Worker from the contents in ./worker.js
- * @method  createWorker
- * @returns {Worker}
- */
-function createWorkerURL() {
-    var functionBody = extractBodyFunction(worker);
-    var blob = new Blob([functionBody], { type: 'text/javascript' });
-
-    return window.URL.createObjectURL(blob);
-}
-
-/**
- * Creats transformation ObjectURL so that this function
- * can be imported in the worker
- * @method  createTransformation
- * @param   {Function} transform
- * @returns {String}
- */
-function createTransformation(transform) {
-    var blob = new Blob(['' + transform], { type: 'text/javascript' });
-
-    return window.URL.createObjectURL(blob);
 }
 
 /**
@@ -75,15 +37,13 @@ function createTransformation(transform) {
 * @returns {Promise}
 */
 function apply(data, transform, options, nWorkers) {
-    var transformationURL = createTransformation(transform);
-    var workerURL = createWorkerURL();
     var canvas = getCanvas(data.width, data.height);
     var context = canvas.getContext('2d');
     var finished = 0;
     var blockSize;
 
     // Drawing the source image into the target canvas
-    context.putImageData(data, 0, 0);
+    context.drawImage(data, 0, 0);
 
     // Minimum number of workers = 1
     if (!nWorkers) {
@@ -94,21 +54,22 @@ function apply(data, transform, options, nWorkers) {
     blockSize = Math.floor(canvas.height / nWorkers);
 
     return new Promise(function (resolve) {
-        var w;
+        var child;
         var height;
         var canvasData;
 
         for (var index = 0; index < nWorkers; index++) {
-            w = new Worker(workerURL);
+            child = cp.fork(__dirname + '/worker');
 
-            w.addEventListener('message', function (e) {
+            child.on('message', function (data) {
                 // Data is retrieved using a memory clone operation
-                var resultCanvasData = e.data.result;
+                var img = new Canvas.Image();
+                img.src = data.result;
 
                 // Copying back canvas data to canvas
                 // If the first webworker  (index 0) returns data, apply it at pixel (0, 0) onwards
                 // If the second webworker  (index 1) returns data, apply it at pixel (0, canvas.height/4) onwards, and so on
-                context.putImageData(resultCanvasData, 0, blockSize * e.data.index);
+                context.drawImage(img, 0, blockSize * data.index);
 
                 finished++;
 
@@ -127,12 +88,12 @@ function apply(data, transform, options, nWorkers) {
             canvasData = context.getImageData(0, blockSize * index, canvas.width, height);
 
             // Sending canvas data to the worker using a copy memory operation
-            w.postMessage({
+            child.send({
                 canvasData: canvasData,
                 index: index,
                 length: height * canvas.width * 4,
                 options: options,
-                transformationURL: transformationURL
+                transform: transform.toString()
             });
         }
     });
