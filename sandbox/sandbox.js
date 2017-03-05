@@ -1,4 +1,4 @@
-var imageFilterCore = require('../src/index');
+var imageFilterCore = require('../src/browser');
 
 function transform(data, length, options) {
     var hex = (options.color.charAt(0) === '#') ? options.color.substr(1) : options.color;

@@ -1,5 +1,4 @@
 require('es6-promise/auto');
-var Canvas = require('canvas');
 var worker = require('./worker');
 
 /**
@@ -10,7 +9,11 @@ var worker = require('./worker');
 * @returns {Object}
 */
 function getCanvas(w, h) {
-    return new Canvas(w, h);
+    var canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+
+    return canvas;
 }
 
 /**
@@ -20,8 +23,10 @@ function getCanvas(w, h) {
 * @returns {String}
 */
 function convertImageDataToCanvasURL(imageData) {
-    var canvas = new Canvas(imageData.width, imageData.height);
+    var canvas = document.createElement('canvas');
     var ctx = canvas.getContext('2d');
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
     ctx.putImageData(imageData, 0, 0);
 
     return canvas.toDataURL();
